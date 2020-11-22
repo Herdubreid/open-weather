@@ -1,0 +1,26 @@
+﻿@inherits LayoutComponentBase
+
+<nav class="navbar navbar-expand-md fixed-top navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            Blíða
+        </a>
+        <button class="navbar-toggler" typeof="button" data-toggle="collapse" data-target="#topNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="topNavbar">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <NavLink Match="NavLinkMatch.Prefix" href="ab" class="nav-link">Address Book</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink Match="NavLinkMatch.Prefix" href="wo" class="nav-link">Work Orders</NavLink>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="main">
+    @Body
+</div>

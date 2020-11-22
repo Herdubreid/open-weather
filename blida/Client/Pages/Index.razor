@@ -1,0 +1,76 @@
+﻿@page "/"
+@inject GrpcChannel Channel
+@inject IJSRuntime JS
+
+@if (LocationTrends is null)
+{
+    <em>Loading...</em>
+}
+else
+{
+    <div class="row m-5">
+        <div id="temp-plot" class="col"></div>
+    </div>
+    <div class="row m-5">
+        <div id="pressure-plot" class="col"></div>
+    </div>
+    <div class="row m-5">
+        <div id="humidity-plot" class="col"></div>
+    </div>
+}
+
+@code {
+    IEnumerable<LocationWeatherTrends> LocationTrends { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (LocationTrends is not null)
+        {
+            var font = new
+            {
+                size = 24
+            };
+            await JS.InvokeVoidAsync("window.plot.line", "temp-plot",
+                PlotFactory.CreateTempGraph(LocationTrends),
+                new
+                {
+                    title = new
+                    {
+                        text = "Temperature &#176;C",
+                        font = font,
+                        xref = "paper"
+                    }
+                },
+                new { displayModeBar = false });
+            await JS.InvokeVoidAsync("window.plot.line", "humidity-plot",
+                PlotFactory.CreateHumidityGraph(LocationTrends),
+                new
+                {
+                    title = new
+                    {
+                        text = "Humidity %",
+                        font = font,
+                        xref = "paper"
+                    }
+                },
+                new { displayModeBar = false });
+            await JS.InvokeVoidAsync("window.plot.line", "pressure-plot",
+                PlotFactory.CreatePressureGraph(LocationTrends),
+                new
+                {
+                    title = new
+                    {
+                        text = "Pressure mbar",
+                        font = font,
+                        xref = "paper"
+                    }
+                },
+                new { displayModeBar = false });
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        var client = new WeatherTrends.WeatherTrendsClient(Channel);
+        var trends = await client.GetWeatherTrendsAsync(new Google.Protobuf.WellKnownTypes.Empty());
+        LocationTrends = trends.LocationWeatherTrends;
+    }
+}

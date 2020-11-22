@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+option csharp_namespace = "Celin";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+package weatherTrend;
+
+message Measure {
+	int32 average = 1;
+	int32 current = 2;
+}
+
+message WeatherTrend {
+	google.protobuf.Timestamp timestamp = 1;
+	Measure temp = 2;
+	Measure feelsLike = 3;
+	Measure pressure = 4;
+	Measure humidity = 5;
+}
+
+message LocationWeatherTrends {
+	int32 location = 1;
+	repeated WeatherTrend trends = 2;
+}
+
+message GetWeatherTrendResponse {
+	repeated LocationWeatherTrends locationWeatherTrends = 1;
+}
+
+service WeatherTrends {
+	rpc GetWeatherTrends (google.protobuf.Empty) returns (GetWeatherTrendResponse);
+}

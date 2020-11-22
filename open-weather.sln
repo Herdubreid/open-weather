@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30711.63
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test", "test\test.csproj", "{FCAF8D84-FAF8-40E1-9182-1F9CC834C9A3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Service", "Service\Service.csproj", "{4BC5E49E-1FF1-4F81-9046-B634C9AEE481}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared", "Shared\Shared.shproj", "{04DB48BC-AB64-43A9-8893-F5868DCA5960}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "blida.Server", "blida\Server\blida.Server.csproj", "{77046361-D7DE-4016-AC74-27A02730A79E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "blida.Client", "blida\Client\blida.Client.csproj", "{24CA1934-1863-4F87-9E86-51F680BC36D8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "blida.Shared", "blida\Shared\blida.Shared.csproj", "{A6408969-2C5B-4245-977D-A73BBB4D3805}"
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Shared\Shared.projitems*{04db48bc-ab64-43a9-8893-f5868dca5960}*SharedItemsImports = 13
+		Shared\Shared.projitems*{4bc5e49e-1ff1-4f81-9046-b634c9aee481}*SharedItemsImports = 5
+		Shared\Shared.projitems*{77046361-d7de-4016-ac74-27a02730a79e}*SharedItemsImports = 5
+		Shared\Shared.projitems*{fcaf8d84-faf8-40e1-9182-1f9cc834c9a3}*SharedItemsImports = 5
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FCAF8D84-FAF8-40E1-9182-1F9CC834C9A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCAF8D84-FAF8-40E1-9182-1F9CC834C9A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCAF8D84-FAF8-40E1-9182-1F9CC834C9A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCAF8D84-FAF8-40E1-9182-1F9CC834C9A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4BC5E49E-1FF1-4F81-9046-B634C9AEE481}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BC5E49E-1FF1-4F81-9046-B634C9AEE481}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BC5E49E-1FF1-4F81-9046-B634C9AEE481}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BC5E49E-1FF1-4F81-9046-B634C9AEE481}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77046361-D7DE-4016-AC74-27A02730A79E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77046361-D7DE-4016-AC74-27A02730A79E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77046361-D7DE-4016-AC74-27A02730A79E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77046361-D7DE-4016-AC74-27A02730A79E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24CA1934-1863-4F87-9E86-51F680BC36D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24CA1934-1863-4F87-9E86-51F680BC36D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24CA1934-1863-4F87-9E86-51F680BC36D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24CA1934-1863-4F87-9E86-51F680BC36D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6408969-2C5B-4245-977D-A73BBB4D3805}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6408969-2C5B-4245-977D-A73BBB4D3805}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6408969-2C5B-4245-977D-A73BBB4D3805}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6408969-2C5B-4245-977D-A73BBB4D3805}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {867E7A23-DB5E-421F-978E-435C549AE9F4}
+	EndGlobalSection
+EndGlobal
