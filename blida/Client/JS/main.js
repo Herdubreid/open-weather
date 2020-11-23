@@ -22,8 +22,18 @@ window.plot = {
         var layout = { width: 600, height: 450, xaxis: { range: range } };
         Plotly.newPlot(div, data, layout, { staticPlot: true });
     },
-    line: (div, data, layout, options) => {
-        layout.with = document.getElementById(div).offsetWidth;
-        Plotly.newPlot(div, data, layout, options);
+    line: (div, data, layout, options, update) => {
+        //layout.width = document.getElementById(div).offsetWidth;
+        if (update) {
+            console.log('Update', div);
+            Plotly.react(div, data, layout, options);
+        }
+        else {
+            console.log('Draw', div);
+            Plotly.newPlot(div, data, layout, options);
+        }
+    },
+    relayout: (div, layout) => {
+        Plotly.relayout(div, layout);
     }
 }

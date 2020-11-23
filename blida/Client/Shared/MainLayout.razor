@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@inject IJSRuntime JS
 
 <nav class="navbar navbar-expand-md fixed-top navbar-light bg-light">
     <div class="container-fluid">
@@ -8,18 +9,25 @@
         <button class="navbar-toggler" typeof="button" data-toggle="collapse" data-target="#topNavbar">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <!--div class="collapse navbar-collapse" id="topNavbar">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-                    <NavLink Match="NavLinkMatch.Prefix" href="ab" class="nav-link">Address Book</!--NavLink>
-                </li>
-                <li class="nav-item">
-                    <NavLink Match="NavLinkMatch.Prefix" href="wo" class="nav-link">Work Orders</NavLink>
-                </li>
-            </ul>
-        </div-->
+        <div class="collapse navbar-collapse" id="topNavbar">
+            <div class="col"></div>
+            <div class="col-auto">
+                <button class="btn btn-outline-primary" @onclick="Refresh">
+                    <i class="fas fa-sync"></i>
+                </button>
+            </div>
+        </div>
     </div>
 </nav>
 <div class="main">
     @Body
 </div>
+
+@code {
+    async Task Refresh()
+    {
+        await JS.InvokeVoidAsync("window.plot.relayout", "temp-plot", new { });
+        await JS.InvokeVoidAsync("window.plot.relayout", "pressure-plot", new { });
+        await JS.InvokeVoidAsync("window.plot.relayout", "humidity-plot", new { });
+    }
+}
