@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 
 namespace Celin.Client
 {
-    public class PlotFactory
+    public static class PlotFactory
     {
+        static TimeSpan LocalOffset { get; } = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now);
         static Dictionary<int, (TimeSpan, string)> Locations { get; } = new Dictionary<int, (TimeSpan, string)>
         {
             { 3413829, new (TimeSpan.FromMinutes(-87), "REK") },
@@ -17,7 +18,7 @@ namespace Celin.Client
         public static object CreateTempGraph(IEnumerable<LocationWeatherTrends> locations)
             => locations.Select(l => new
             {
-                x = l.Trends.Select(t => Math.Round((t.Timestamp.ToDateTimeOffset().LocalDateTime - DateTime.Now).Add(Locations[l.Location].Item1).TotalMinutes)),
+                x = l.Trends.Select(t => ((t.Timestamp.ToDateTimeOffset() - DateTime.Now - LocalOffset).Add(Locations[l.Location].Item1).TotalHours)),
                 y = l.Trends.Select(t => t.Temp.Current / 10.0),
                 mode = "lines+markers",
                 type = "scatter",
@@ -35,7 +36,7 @@ namespace Celin.Client
         public static object CreateHumidityGraph(IEnumerable<LocationWeatherTrends> locations)
             => locations.Select(l => new
             {
-                x = l.Trends.Select(t => Math.Round((t.Timestamp.ToDateTimeOffset().LocalDateTime - DateTime.Now).Add(Locations[l.Location].Item1).TotalMinutes)),
+                x = l.Trends.Select(t => ((t.Timestamp.ToDateTimeOffset().LocalDateTime - DateTime.Now - LocalOffset).Add(Locations[l.Location].Item1).TotalHours)),
                 y = l.Trends.Select(t => t.Humidity.Current),
                 mode = "lines+markers",
                 type = "scatter",
@@ -46,7 +47,7 @@ namespace Celin.Client
         public static object CreatePressureGraph(IEnumerable<LocationWeatherTrends> locations)
             => locations.Select(l => new
             {
-                x = l.Trends.Select(t => Math.Round((t.Timestamp.ToDateTimeOffset().LocalDateTime - DateTime.Now).Add(Locations[l.Location].Item1).TotalMinutes)),
+                x = l.Trends.Select(t => ((t.Timestamp.ToDateTimeOffset().LocalDateTime - DateTime.Now - LocalOffset).Add(Locations[l.Location].Item1).TotalHours)),
                 y = l.Trends.Select(t => t.Pressure.Current),
                 mode = "lines+markers",
                 type = "scatter",

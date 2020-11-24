@@ -19,7 +19,7 @@ namespace OpenWeather
                 {
                     Count = 1,
                     TimeStamp = measure.dt,
-                    MinShift = measure.coord.lon.Item1.Minutes,
+                    MinShift = (int) measure.coord.lon.Item1.TotalMinutes,
                     Temp = (measure.main.temp, measure.main.temp),
                     FeelsLike = (measure.main.feels_like, measure.main.feels_like),
                     Pressure = (measure.main.pressure, measure.main.pressure),
@@ -33,7 +33,7 @@ namespace OpenWeather
                 {
                     Count = trend.Count + 1,
                     TimeStamp = measure.dt,
-                    MinShift = measure.coord.lon.Item1.Minutes,
+                    MinShift = (int) measure.coord.lon.Item1.TotalMinutes,
                     Temp = (trend.Temp.Item1 + (measure.main.temp - trend.Temp.Item1) * w, measure.main.temp),
                     FeelsLike = (trend.FeelsLike.Item1 + (measure.main.feels_like - trend.FeelsLike.Item1) * w, measure.main.feels_like),
                     Pressure = (trend.Pressure.Item1 + (int)Math.Round((measure.main.pressure - trend.Pressure.Item1) * w), measure.main.pressure),

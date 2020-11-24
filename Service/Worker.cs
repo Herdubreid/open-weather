@@ -29,16 +29,16 @@ namespace Service
         static readonly int[] keys = new int[] { 3413829, 2618425, 1566083, 2063523 };
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            int waitMins = 59 - DateTime.Now.Minute;
-            Logger.LogInformation("{0}, waiting {1} minutes...", DateTimeOffset.Now, waitMins);
-            await Task.Delay((int) TimeSpan.FromMinutes(waitMins).TotalMilliseconds, stoppingToken);
-            string endpoint = $"http://api.openweathermap.org/data/2.5/group?id={string.Join(',', keys)}&units=metric&appid={Config["OpenWeatherApiKey"]}";
-            var delay = TimeSpan.FromMinutes(60);
             var trend =
                 await Cache.GetRecordAsync<Dictionary<int, List<Trend>>>(RedisKey)
                 ?? new Dictionary<int, List<Trend>>();
+            Logger.LogInformation("Loaded {0} existing rows.", trend.Count);
+            string endpoint = $"http://api.openweathermap.org/data/2.5/group?id={string.Join(',', keys)}&units=metric&appid={Config["OpenWeatherApiKey"]}";
             while (!stoppingToken.IsCancellationRequested)
             {
+                var waitMins = (85 - DateTime.Now.Minute) % 60;
+                Logger.LogInformation("{0}, waiting until {1}, {2} minutes...", DateTimeOffset.Now, DateTime.Now.AddMinutes(waitMins), waitMins);
+                await Task.Delay((int) TimeSpan.FromMinutes(waitMins).TotalMilliseconds, stoppingToken);
                 Logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 try
                 {
@@ -73,7 +73,7 @@ namespace Service
                 {
                     Console.WriteLine(ex.Message);
                 }
-                await Task.Delay((int)delay.TotalMilliseconds, stoppingToken);
+                await Task.Delay((int)TimeSpan.FromMinutes(2).TotalMilliseconds, stoppingToken);
             }
         }
         public Worker(IConfiguration config, ILogger<Worker> logger, IDistributedCache cache)

@@ -24,7 +24,7 @@ namespace OpenWeather
             T data)
         {
             var json = JsonSerializer.Serialize(data, JsonOptions);
-            await cache.SetStringAsync(recordId, json, CacheOptions);
+            await cache.SetStringAsync(recordId, json);
         }
         public static async Task<T> GetRecordAsync<T>(this IDistributedCache cache, string recordId)
         {
