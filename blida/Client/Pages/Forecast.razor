@@ -1,0 +1,292 @@
+﻿@page "/forecast/{LocationId:int}"
+@inject GrpcChannel Channel
+@inject IJSRuntime JS
+
+@if (Location.HasValue)
+{
+    <div class="row m-0">
+        <div id="temp-plot" class="col p-0"></div>
+    </div>
+    <div class="row m-0">
+        <div id="pressure-plot" class="col p-0"></div>
+    </div>
+    <div class="row m-0">
+        <div id="humidity-plot" class="col p-0"></div>
+    </div>
+}
+else
+{
+    <em>Loading...</em>
+}
+
+@code {
+    [Parameter]
+    public int LocationId { get; set; }
+    (TimeSpan, string)? Location { get; set; }
+
+    string ErrorMsg { get; set; }
+    byte[] ForecastData { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (ForecastData is not null && Location.HasValue)
+        {
+            var options = new
+            {
+                displayModeBar = false,
+                responsive = true
+            };
+            var layout = new
+            {
+                margin = new { l = 60, r = 40, t = 0, b = 0 },
+                autosize = true,
+                plot_bgcolor = "rgb(219,233,244)"
+            };
+            var forecast = Compressor.Unpack<IEnumerable<Data>>(ForecastData);
+            await JS.InvokeVoidAsync("window.plot.line", "temp-plot",
+                PlotFactory.CreateAverageLine<DateTime, decimal, decimal, decimal>(
+                            forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                                .GroupBy(f => f.dt + Location.Value.Item1, f => f.main.temp)
+                                .Select(f => (f.Key, f.Average(), f.Max(), f.Min())), "rgb(114,160,193)")
+                    .Concat(forecast
+                    .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                    .GroupBy(f => Math.Round(f.fdt / 180d), f => (f.dt + Location.Value.Item1, f.main.temp))
+                    .Select(f => PlotFactory.CreatePlot<DateTime, decimal>(
+                        f.AsEnumerable(),
+                            new
+                            {
+                                name = $"{f.Key}h",
+                                marker = new
+                                {
+                                    color = "rgb(70,130,180)",
+                                    opacity = (90.0 - f.Key * 2.0) / 100.0,
+                                    size = (int)f.Key / 2,
+                                    symbol = "square"
+                                },
+                                showlegend = false,
+                                hoverinfo = "none"
+                            })))
+                    .Concat(new[]
+                    {
+                        PlotFactory.CreateMarkersLine<DateTime, decimal>(
+                            forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual))
+                                .Select(f => (f.dt + Location.Value.Item1, f.main.temp)),
+                            new
+                            {
+                                name = "Actual",
+                                marker = new
+                                {
+                                    symbol = "diamond-open",
+                                    color = "rgb(18,97,128)"
+                                },
+                                showlegend = false
+                            }),
+                        PlotFactory.CreateLine<DateTime, decimal>(
+                            forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                                .TakeLast(40)
+                                .Prepend(forecast.Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual)).Last())
+                                .Select(f => (f.dt + Location.Value.Item1, f.main.temp)),
+                            new
+                            {
+                                name = "Forecast",
+                                line = new
+                                {
+                                    color = "rgb(18,97,128)",
+                                    dash = "dot",
+                                    width = 3,
+                                    shape = "spline"
+                                },
+                                showlegend = false
+                            })
+                    }),
+            TypeMerger.TypeMerger.Merge(new
+            {
+                title = new
+                {
+                    text = $"{forecast.Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual)).Last().main.temp}&#xb0;C",
+                    font = new
+                    {
+                        color = "rgb(18,97,128)",
+                        size = 28
+                    },
+                    xref = "paper",
+                    y = 0.85,
+                    x = 0.01
+                },
+                margin = new { l = 60, r = 40, t = 60, b = 0 },
+                xaxis = new { side = "top" },
+                yaxis = new { title = "Temperature" }
+            }, layout),
+            options);
+            await JS.InvokeVoidAsync("window.plot.line", "pressure-plot",
+                PlotFactory.CreateAverageLine<DateTime, double, int, int>(
+                            forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                                .GroupBy(f => f.dt + Location.Value.Item1, f => f.main.pressure)
+                                .Select(f => (f.Key, f.Average(), f.Max(), f.Min())), "rgb(255,212,128)")
+                    .Concat(forecast
+                    .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                    .GroupBy(f => Math.Round(f.fdt / 180d), f => (f.dt + Location.Value.Item1, f.main.pressure))
+                    .Select(f => PlotFactory.CreatePlot<DateTime, int>(
+                        f.AsEnumerable(),
+                        new
+                        {
+                            name = $"{f.Key}h",
+                            marker = new
+                            {
+                                color = "rgb(255,191,0)",
+                                opacity = (90.0 - f.Key * 2.0) / 100.0,
+                                size = (int)f.Key / 2,
+                                symbol = "square"
+                            },
+                            showlegend = false,
+                            hoverinfo = "none"
+                        })))
+                    .Concat(new[]
+                    {
+                        PlotFactory.CreateMarkersLine<DateTime, int>(
+                            forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual))
+                                .Select(f => (f.dt + Location.Value.Item1, f.main.pressure)),
+                            new
+                            {
+                                name = "Actual",
+                                marker = new
+                                {
+                                    symbol = "diamond-open",
+                                    color = "rgb(204,153,0)"
+                                },
+                                showlegend = false
+                            }),
+                        PlotFactory.CreateLine<DateTime, int>(
+                            forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                                .TakeLast(40)
+                                .Prepend(forecast.Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual)).Last())
+                                .Select(f => (f.dt + Location.Value.Item1, f.main.pressure)),
+                            new
+                            {
+                                name = "Forecast",
+                                line = new
+                                {
+                                    color = "rgb(204,153,0)",
+                                    dash = "dot",
+                                    width = 3,
+                                    shape = "spline"
+                                },
+                                showlegend = false
+                            })
+                    }),
+            TypeMerger.TypeMerger.Merge(layout, new
+            {
+                title = new
+                {
+                    text = $"{forecast.Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual)).Last().main.pressure}mb",
+                    font = new
+                    {
+                        color = "rgb(204,153,0)",
+                        size = 28
+                    },
+                    xref = "paper",
+                    y = 0.85,
+                    x = 0.01
+                },
+                yaxis = new { title = "Pressure" }
+            }),
+            options);
+            await JS.InvokeVoidAsync("window.plot.line", "humidity-plot",
+                PlotFactory.CreateAverageLine<DateTime, double, int, int>(
+                            forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                                .GroupBy(f => f.dt + Location.Value.Item1, f => f.main.humidity)
+                                .Select(f => (f.Key, f.Average(), f.Max(), f.Min())), "rgb(233, 150, 122)")
+                    .Concat(forecast
+                    .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                    .GroupBy(f => Math.Round(f.fdt / 180d), f => (f.dt + Location.Value.Item1, f.main.humidity))
+                    .Select(f => PlotFactory.CreatePlot<DateTime, int>(
+                        f.AsEnumerable(),
+                        new
+                        {
+                            name = $"{f.Key}h",
+                            marker = new
+                            {
+                                color = "rgb(220,20,60)",
+                                opacity = (90.0 - f.Key * 2.0) / 100.0,
+                                size = (int)f.Key / 2,
+                                symbol = "square"
+                            },
+                            showlegend = false,
+                            hoverinfo = "none"
+                        })))
+                    .Concat(new[]
+                    {
+                        PlotFactory.CreateMarkersLine<DateTime, int>(
+                            forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual))
+                                .Select(f => (f.dt + Location.Value.Item1, f.main.humidity)),
+                            new
+                            {
+                                name = "Actual",
+                                marker = new
+                                {
+                                    symbol = "diamond-open",
+                                    color = "rgb(153,0,0)"
+                                },
+                                showlegend = false
+                            }),
+                        PlotFactory.CreateLine<DateTime, int>(
+                            forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                                .TakeLast(40)
+                                .Prepend(forecast.Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual)).Last())
+                                .Select(f => (f.dt + Location.Value.Item1, f.main.humidity)),
+                            new
+                            {
+                                name = "Forecast",
+                                line = new
+                                {
+                                    color = "rgb(153,0,0)",
+                                    dash = "dot",
+                                    width = 3,
+                                    shape = "spline"
+                                },
+                                showlegend = false
+                            })
+                    }),
+            TypeMerger.TypeMerger.Merge(new
+            {
+                title = new
+                {
+                    text = $"{forecast.Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual)).Last().main.humidity}%",
+                    font = new
+                    {
+                        color = "rgb(153,0,0)",
+                        size = 28
+                    },
+                    xref = "paper",
+                    y = 0.85,
+                    x = 0.01
+                },
+                margin = new { l = 60, r = 40, t = 0, b = 40 },
+                yaxis = new { title = "Humidity" }
+            }, layout),
+            options);
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        var client = new WeatherForecast.WeatherForecastClient(Channel);
+        var response = await client.GetWeatherForecastsAsync(new Google.Protobuf.WellKnownTypes.Empty());
+
+        ForecastData = response.Data.ToArray();
+    }
+    protected override void OnParametersSet()
+    {
+        if (PlotFactory.Locations.TryGetValue(LocationId, out var loc))
+        {
+            Location = loc;
+        }
+    }
+}

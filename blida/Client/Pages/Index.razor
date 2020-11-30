@@ -22,7 +22,7 @@ else
 @code {
     IEnumerable<LocationWeatherTrends> LocationTrends { get; set; }
     System.Timers.Timer EveryMinute { get; } = new System.Timers.Timer(6000);
-    DateTime NextHour { get; set; }
+    DateTime NextUpdate { get; set; }
     async Task Plot(bool update = false)
     {
         var margin = new
@@ -38,15 +38,8 @@ else
         };
         var options = new
         {
-            displayModeBar = false
-        };
-        var xaxis = new
-        {
-
-            title = new
-            {
-                text = DateTime.Now.ToShortTimeString()
-            }
+            displayModeBar = false,
+            responsive = true
         };
         await JS.InvokeVoidAsync("window.plot.line", "temp-plot",
             PlotFactory.CreateTempGraph(LocationTrends),
@@ -71,7 +64,7 @@ else
                 {
                     text = "Humidity %",
                     font = font,
-                    xref = "paper"
+                    xref = "container"
                 },
                 margin = margin,
                 autosize = true
@@ -86,7 +79,7 @@ else
                 {
                     text = "Pressure mbar",
                     font = font,
-                    xref = "paper"
+                    xref = "container"
                 },
                 margin = margin,
                 autosize = true
@@ -99,7 +92,7 @@ else
         var client = new WeatherTrends.WeatherTrendsClient(Channel);
         var trends = await client.GetWeatherTrendsAsync(new Google.Protobuf.WellKnownTypes.Empty());
         LocationTrends = trends.LocationWeatherTrends;
-        NextHour = DateTime.Now.Date.AddHours(DateTime.Now.Hour + 1).AddMinutes(2);
+        NextUpdate = DateTime.Now.Date.AddHours(DateTime.Now.Hour + 1).AddMinutes(2);
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -108,14 +101,14 @@ else
             await Plot();
             EveryMinute.Elapsed += (async (object _1, System.Timers.ElapsedEventArgs _2) =>
             {
-                if (DateTime.Now.CompareTo(NextHour) > 0)
+                if (DateTime.Now.CompareTo(NextUpdate) > 0)
                 {
                     await UpdateWeather();
                     await Plot(true);
                 }
             });
             EveryMinute.AutoReset = true;
-            EveryMinute.Enabled = true;
+            //EveryMinute.Enabled = true;
         }
     }
     protected override async Task OnInitializedAsync()

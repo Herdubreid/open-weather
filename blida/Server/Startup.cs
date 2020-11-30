@@ -68,6 +68,7 @@ namespace Celin.Server
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapGrpcService<WeatherTrendService>().EnableGrpcWeb();
+                endpoints.MapGrpcService<WeatherForecastService>().EnableGrpcWeb();
                 endpoints.MapFallbackToFile("index.html");
             });
         }

@@ -9,6 +9,8 @@
     <Import_RootNamespace>Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Compressor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Data.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JsonConverters.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Response.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Trend.cs" />

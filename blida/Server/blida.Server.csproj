@@ -20,6 +20,4 @@
     <ProjectReference Include="..\Shared\blida.Shared.csproj" />
   </ItemGroup>
 
-  <Import Project="..\..\Shared\Shared.projitems" Label="Shared" />
-
 </Project>

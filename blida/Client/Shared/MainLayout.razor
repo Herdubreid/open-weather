@@ -10,12 +10,14 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="topNavbar">
-            <div class="col"></div>
-            <div class="col-auto">
-                <button class="btn btn-outline-primary" @onclick="Refresh">
-                    <i class="fas fa-sync"></i>
-                </button>
-            </div>
+            <ul class="navbar-nav mr-auto">
+                @foreach (var l in PlotFactory.Locations)
+                {
+                    <li class="nav-item">
+                        <NavLink Match="NavLinkMatch.Prefix" href="@($"forecast/{l.Key}")" class="nav-link">@l.Value.Item2</NavLink>
+                    </li>
+                }
+            </ul>
         </div>
     </div>
 </nav>
@@ -24,10 +26,4 @@
 </div>
 
 @code {
-    async Task Refresh()
-    {
-        await JS.InvokeVoidAsync("window.plot.relayout", "temp-plot", new { });
-        await JS.InvokeVoidAsync("window.plot.relayout", "pressure-plot", new { });
-        await JS.InvokeVoidAsync("window.plot.relayout", "humidity-plot", new { });
-    }
 }

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option csharp_namespace = "Celin";
+
+import "google/protobuf/empty.proto";
+
+package openWeather;
+
+message ForecastResponse {
+	bytes data = 1;
+}
+
+service WeatherForecast {
+	rpc GetWeatherForecasts (google.protobuf.Empty) returns (ForecastResponse);
+}

@@ -37,5 +37,17 @@ namespace OpenWeather
 
             return JsonSerializer.Deserialize<T>(json, JsonOptions);
         }
+        public static async Task SetCompressedRecordAsync<T>(this IDistributedCache cache,
+            string recordId,
+            T data)
+        {
+            var b = Compressor.Pack(data);
+            await cache.SetAsync(recordId, b);
+        }
+        public static async Task<T> GetCompressedRecordAsync<T>(this IDistributedCache cache, string recordId)
+        {
+            var b = await cache.GetAsync(recordId);
+            return Compressor.Unpack<T>(b) ?? default(T);
+        }
     }
 }
