@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.IO.Compression;
+using System.Dynamic;
 
 namespace test
 {
@@ -25,17 +26,69 @@ namespace test
                 new TimeSpanConverter()
             }
         };
+        public static ExpandoObject CopyValues(object ob1, object ob2)
+        {
+            ExpandoObject result = new ExpandoObject();
+
+            foreach (var prop in ob1.GetType().GetProperties())
+            {
+                var value = prop.GetValue(ob1, null);
+                if (value != null)
+                    result.TryAdd(prop.Name, value);
+            }
+
+            foreach (var prop in ob2.GetType().GetProperties())
+            {
+                var value = prop.GetValue(ob2, null);
+                if (value != null)
+                    result.TryAdd(prop.Name, value);
+            }
+
+            return result;
+        }
         static async Task Main(string[] args)
         {
+            object Layout = new
+            {
+                margin = new { l = 60, r = 40, t = 0, b = 0 },
+                autosize = true,
+                plot_bgcolor = "rgb(219,233,244)"
+            };
+            var layout = new
+            {
+                title = new
+                {
+                    text = "Some Text",
+                    font = new
+                    {
+                        color = "rgb(18,97,128)",
+                        size = 28
+                    },
+                    xref = "paper",
+                    y = 0.85,
+                    x = 0.01
+                },
+                margin = new { l = 60, r = 40, t = 60, b = 0 },
+                xaxis = new { side = "top" },
+                yaxis = new { title = "Temperature" }
+            };
+
+            var obC = CopyValues(Layout, layout);
+
+            var sC = JsonSerializer.Serialize(obC);
+            var ob = JsonSerializer.Deserialize<object>(sC);
+
             try
             {
                 var redislab = ConnectionMultiplexer
-                    .Connect("redis-15134.c244.us-east-1-2.ec2.cloud.redislabs.com:15134,password=");
+                    .Connect("redis");
                 var db2 = redislab.GetDatabase();
                 var old = await db2.HashGetAllAsync("OpenWeather_Forecast");
                 byte[] b = old[1].Value;
 
                 var last = Compressor.Unpack<List<Data>>(b) ?? new List<Data>();
+                var dp = last.First();
+                Console.WriteLine("byte {0}, characters {1}", b.Length, JsonSerializer.Serialize(dp).Length);
                 foreach (var t in last
                     .Where(f => f.id.Equals(2063523) && f.dtype.Equals(DataType.forecast))
                     .GroupBy(f => f.dt, f => f.main.temp)

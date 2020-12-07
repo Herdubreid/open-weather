@@ -6,10 +6,28 @@ import "google/protobuf/empty.proto";
 
 package openWeather;
 
-message ForecastResponse {
+message ForecastResponse
+{
 	bytes data = 1;
 }
 
-service WeatherForecast {
+message RandomGraphRequest
+{
+	int32 lastLocation = 1;
+	int32 lastGraph = 2;
+}
+
+message RandomGraphResponse
+{
+	int32 location = 1;
+	int32 graph = 2; 
+	bytes data = 3;
+	bytes layout = 4;
+	bytes options = 5;
+}
+
+service WeatherForecast
+{
 	rpc GetWeatherForecasts (google.protobuf.Empty) returns (ForecastResponse);
+	rpc GetRandomGraph(RandomGraphRequest) returns (RandomGraphResponse);
 }

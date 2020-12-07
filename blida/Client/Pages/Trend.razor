@@ -1,0 +1,123 @@
+﻿@page "/trend"
+@implements IDisposable
+@inject GrpcChannel Channel
+@inject IJSRuntime JS
+
+<div class="row m-0">
+    <div id="temp-plot" class="col p-0"></div>
+</div>
+<div class="row m-0">
+    <div id="pressure-plot" class="col p-0"></div>
+</div>
+<div class="row m-0">
+    <div id="humidity-plot" class="col p-0"></div>
+</div>
+<Busy ShowBusy="@ShowBusy"></Busy>
+
+@code {
+    bool ShowBusy { get; set; } = true;
+    IEnumerable<LocationWeatherTrends> LocationTrends { get; set; }
+    System.Timers.Timer EveryMinute { get; } = new System.Timers.Timer(6000);
+    DateTime NextUpdate { get; set; }
+    async Task Plot(bool update = false)
+    {
+        var margin = new
+        {
+            l = 40,
+            r = 40,
+            t = 60,
+            b = 60
+        };
+        var font = new
+        {
+            size = 24
+        };
+        var options = new
+        {
+            displayModeBar = false,
+            responsive = true
+        };
+        await JS.InvokeVoidAsync("window.plot.line", "temp-plot",
+            PlotFactory.CreateTempGraph(LocationTrends),
+            new
+            {
+                title = new
+                {
+                    text = "Temperature &#176;C",
+                    font = font,
+                    xref = "container"
+                },
+                margin = margin,
+                autosize = true
+            },
+            options,
+            update);
+        await JS.InvokeVoidAsync("window.plot.line", "humidity-plot",
+            PlotFactory.CreateHumidityGraph(LocationTrends),
+            new
+            {
+                title = new
+                {
+                    text = "Humidity %",
+                    font = font,
+                    xref = "container"
+                },
+                margin = margin,
+                autosize = true
+            },
+            options,
+            update);
+        await JS.InvokeVoidAsync("window.plot.line", "pressure-plot",
+            PlotFactory.CreatePressureGraph(LocationTrends),
+            new
+            {
+                title = new
+                {
+                    text = "Pressure mbar",
+                    font = font,
+                    xref = "container"
+                },
+                margin = margin,
+                autosize = true
+            },
+            options,
+            update);
+    }
+    async Task UpdateWeather()
+    {
+        var client = new WeatherTrends.WeatherTrendsClient(Channel);
+        var trends = await client.GetWeatherTrendsAsync(new Google.Protobuf.WellKnownTypes.Empty());
+        LocationTrends = trends.LocationWeatherTrends;
+        NextUpdate = DateTime.Now.Date.AddHours(DateTime.Now.Hour + 1).AddMinutes(2);
+    }
+    async void OnUpdate(object _1, System.Timers.ElapsedEventArgs _2)
+    {
+        if (DateTime.Now.CompareTo(NextUpdate) > 0)
+        {
+            ShowBusy = true;
+            await UpdateWeather();
+            await Plot(true);
+            ShowBusy = false;
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (LocationTrends is not null)
+        {
+            await Plot();
+            ShowBusy = false;
+            EveryMinute.Elapsed += OnUpdate;
+            EveryMinute.AutoReset = true;
+            EveryMinute.Enabled = true;
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await UpdateWeather();
+        ShowBusy = false;
+    }
+    void IDisposable.Dispose()
+    {
+        EveryMinute.Elapsed -= OnUpdate;
+    }
+}

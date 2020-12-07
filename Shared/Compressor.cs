@@ -9,7 +9,7 @@ namespace OpenWeather
     {
         public static byte[] Pack<T>(T o)
         {
-            var b = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(o));
+            var b = JsonSerializer.SerializeToUtf8Bytes(o);
             using MemoryStream ms = new MemoryStream();
             using DeflateStream ds = new DeflateStream(ms, CompressionLevel.Optimal);
             ds.Write(b);

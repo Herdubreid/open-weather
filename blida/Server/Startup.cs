@@ -40,6 +40,8 @@ namespace Celin.Server
             {
                 options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/octed-stream" });
             });
+
+            services.AddSingleton<ForecastDataService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

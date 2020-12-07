@@ -2,26 +2,21 @@
 @inject GrpcChannel Channel
 @inject IJSRuntime JS
 
-@if (Location.HasValue)
-{
-    <div class="row m-0">
-        <div id="temp-plot" class="col p-0"></div>
-    </div>
-    <div class="row m-0">
-        <div id="pressure-plot" class="col p-0"></div>
-    </div>
-    <div class="row m-0">
-        <div id="humidity-plot" class="col p-0"></div>
-    </div>
-}
-else
-{
-    <em>Loading...</em>
-}
+<div class="row m-0">
+    <div id="temp-plot" class="col p-0"></div>
+</div>
+<div class="row m-0">
+    <div id="pressure-plot" class="col p-0"></div>
+</div>
+<div class="row m-0">
+    <div id="humidity-plot" class="col p-0"></div>
+</div>
+<Busy ShowBusy="@ShowBusy"></Busy>
 
 @code {
     [Parameter]
     public int LocationId { get; set; }
+    bool ShowBusy { get; set; } = true;
     (TimeSpan, string)? Location { get; set; }
 
     string ErrorMsg { get; set; }
@@ -43,11 +38,11 @@ else
             };
             var forecast = Compressor.Unpack<IEnumerable<Data>>(ForecastData);
             await JS.InvokeVoidAsync("window.plot.line", "temp-plot",
-                PlotFactory.CreateAverageLine<DateTime, decimal, decimal, decimal>(
+                PlotFactory.CreateMaxMinArea<DateTime, decimal, decimal>(
                             forecast
                                 .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
                                 .GroupBy(f => f.dt + Location.Value.Item1, f => f.main.temp)
-                                .Select(f => (f.Key, f.Average(), f.Max(), f.Min())), "rgb(114,160,193)")
+                                .Select(f => (f.Key, f.Max(), f.Min())), "rgb(114,160,193)")
                     .Concat(forecast
                     .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
                     .GroupBy(f => Math.Round(f.fdt / 180d), f => (f.dt + Location.Value.Item1, f.main.temp))
@@ -68,6 +63,16 @@ else
                             })))
                     .Concat(new[]
                     {
+                        PlotFactory.CreateLine(forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                                .GroupBy(f => f.dt + Location.Value.Item1, f => f.main.temp)
+                                .Select(f => (f.Key, f.Average())), new
+                                {
+                                    name = "Forecast Avg",
+                                    line = new { shape = "spline",  color = "rgb(219,233,244)", dash = "dash" },
+                                    showlegend = false,
+                                    hoverinfo = "none"
+                                }),
                         PlotFactory.CreateMarkersLine<DateTime, decimal>(
                             forecast
                                 .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual))
@@ -100,7 +105,7 @@ else
                                 },
                                 showlegend = false
                             })
-                    }),
+                                }),
             TypeMerger.TypeMerger.Merge(new
             {
                 title = new
@@ -121,11 +126,11 @@ else
             }, layout),
             options);
             await JS.InvokeVoidAsync("window.plot.line", "pressure-plot",
-                PlotFactory.CreateAverageLine<DateTime, double, int, int>(
+                PlotFactory.CreateMaxMinArea<DateTime, int, int>(
                             forecast
                                 .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
                                 .GroupBy(f => f.dt + Location.Value.Item1, f => f.main.pressure)
-                                .Select(f => (f.Key, f.Average(), f.Max(), f.Min())), "rgb(255,212,128)")
+                                .Select(f => (f.Key, f.Max(), f.Min())), "rgb(255,212,128)")
                     .Concat(forecast
                     .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
                     .GroupBy(f => Math.Round(f.fdt / 180d), f => (f.dt + Location.Value.Item1, f.main.pressure))
@@ -146,6 +151,16 @@ else
                         })))
                     .Concat(new[]
                     {
+                        PlotFactory.CreateLine(forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                                .GroupBy(f => f.dt + Location.Value.Item1, f => f.main.pressure)
+                                .Select(f => (f.Key, f.Average())), new
+                                {
+                                    name = "Forecast Avg",
+                                    line = new { shape = "spline",  color = "rgb(219,233,244)", dash = "dash" },
+                                    showlegend = false,
+                                    hoverinfo = "none"
+                                }),
                         PlotFactory.CreateMarkersLine<DateTime, int>(
                             forecast
                                 .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual))
@@ -178,7 +193,7 @@ else
                                 },
                                 showlegend = false
                             })
-                    }),
+                                }),
             TypeMerger.TypeMerger.Merge(layout, new
             {
                 title = new
@@ -197,11 +212,11 @@ else
             }),
             options);
             await JS.InvokeVoidAsync("window.plot.line", "humidity-plot",
-                PlotFactory.CreateAverageLine<DateTime, double, int, int>(
+                PlotFactory.CreateMaxMinArea<DateTime, int, int>(
                             forecast
                                 .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
                                 .GroupBy(f => f.dt + Location.Value.Item1, f => f.main.humidity)
-                                .Select(f => (f.Key, f.Average(), f.Max(), f.Min())), "rgb(233, 150, 122)")
+                                .Select(f => (f.Key, f.Max(), f.Min())), "rgb(233, 150, 122)")
                     .Concat(forecast
                     .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
                     .GroupBy(f => Math.Round(f.fdt / 180d), f => (f.dt + Location.Value.Item1, f.main.humidity))
@@ -222,6 +237,16 @@ else
                         })))
                     .Concat(new[]
                     {
+                        PlotFactory.CreateLine(forecast
+                                .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.forecast))
+                                .GroupBy(f => f.dt + Location.Value.Item1, f => f.main.humidity)
+                                .Select(f => (f.Key, f.Average())), new
+                                {
+                                    name = "Forecast Avg",
+                                    line = new { shape = "spline",  color = "rgb(219,233,244)", dash = "dash" },
+                                    showlegend = false,
+                                    hoverinfo = "none"
+                                }),
                         PlotFactory.CreateMarkersLine<DateTime, int>(
                             forecast
                                 .Where(f => f.id.Equals(LocationId) && f.dtype.Equals(DataType.actual))
@@ -254,7 +279,7 @@ else
                                 },
                                 showlegend = false
                             })
-                    }),
+                                }),
             TypeMerger.TypeMerger.Merge(new
             {
                 title = new
@@ -281,6 +306,7 @@ else
         var response = await client.GetWeatherForecastsAsync(new Google.Protobuf.WellKnownTypes.Empty());
 
         ForecastData = response.Data.ToArray();
+        ShowBusy = false;
     }
     protected override void OnParametersSet()
     {

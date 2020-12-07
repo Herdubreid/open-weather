@@ -1,11 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 
-namespace Celin.Client
+namespace Celin.Shared
 {
     public static class PlotFactory
     {
+        public static ExpandoObject Merge(object ob1, object ob2)
+        {
+            ExpandoObject result = new ExpandoObject();
+
+            foreach (var prop in ob1.GetType().GetProperties())
+            {
+                var value = prop.GetValue(ob1, null);
+                if (value != null)
+                    result.TryAdd(prop.Name, value);
+            }
+
+            foreach (var prop in ob2.GetType().GetProperties())
+            {
+                var value = prop.GetValue(ob2, null);
+                if (value != null)
+                    result.TryAdd(prop.Name, value);
+            }
+
+            return result;
+        }
         static TimeSpan LocalOffset { get; } = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now);
         public static Dictionary<int, (TimeSpan, string)> Locations { get; } = new Dictionary<int, (TimeSpan, string)>
         {
@@ -15,7 +36,7 @@ namespace Celin.Client
             { 2063523, new (TimeSpan.FromMinutes(463), "PER") }
         };
         public static object CreatePlot<T1, T2>(IEnumerable<(T1, T2)> data, object options)
-            => TypeMerger.TypeMerger.Merge(new
+            => Merge(new
             {
                 x = data.Select(d => d.Item1),
                 y = data.Select(d => d.Item2),
@@ -24,24 +45,13 @@ namespace Celin.Client
             }, options);
         public static IEnumerable<object> CreatePlot<T1, T2, T3>(IEnumerable<IGrouping<T1, (T2, T3)>> data)
             => data.Select(d => CreatePlot(d.AsEnumerable(), new { }));
-        public static object[] CreateAverageLine<T1, T2, T3, T4>(IEnumerable<(T1, T2, T3, T4)> data, string fillcolor)
+        public static object[] CreateMaxMinArea<T1, T2, T3>(IEnumerable<(T1, T2, T3)> data, string fillcolor)
             => new[]
             {
-                CreateLine(data.Select(f => (f.Item1, f.Item4)), new
+                CreateLine(data.Select(f => (f.Item1, f.Item2)), new
                 {
                     name = "Forecast Min",
                     line = new { width = 0, shape = "spline" },
-                    marker = new { color = "444" },
-                    showlegend = false,
-                    hoverinfo = "none"
-                }),
-                CreateLine(data.Select(f => (f.Item1, f.Item2)), new
-                {
-                    name = "Forecast Avg",
-                    fill = "tonexty",
-                    fillcolor = fillcolor,
-                    line = new { shape = "spline",  color = "rgb(219,233,244)", dash = "dash" },
-                    marker = new { color = "444" },
                     showlegend = false,
                     hoverinfo = "none"
                 }),
@@ -51,13 +61,12 @@ namespace Celin.Client
                     fill = "tonexty",
                     fillcolor = fillcolor,
                     line = new { width = 0, shape = "spline" },
-                    marker =  new { color = "444" },
                     showlegend = false,
                     hoverinfo = "none"
                 })
             };
         public static object CreateLine<T1, T2>(IEnumerable<(T1, T2)> data, object options)
-            => TypeMerger.TypeMerger.Merge(new
+            => Merge(new
             {
                 x = data.Select(d => d.Item1),
                 y = data.Select(d => d.Item2),
@@ -65,7 +74,7 @@ namespace Celin.Client
                 type = "scatter"
             }, options);
         public static object CreateMarkersLine<T1, T2>(IEnumerable<(T1, T2)> data, object options)
-            => TypeMerger.TypeMerger.Merge(new
+            => Merge(new
             {
                 x = data.Select(d => d.Item1),
                 y = data.Select(d => d.Item2),

@@ -1,0 +1,20 @@
+﻿<div class="center" hidden="@(!ShowBusy)">
+    <i class="fas fa-spinner fa-spin fa-lg"></i>
+    <em> Loading...</em>
+</div>
+<style>
+    .center {
+        font-size: 36px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -ms-transform: translateX(-50%) translateY(-50%);
+        -webkit-transform: translate(-50%,-50%);
+        transform: translate(-50%,-50%);
+        z-index: 99;
+    }
+</style>
+@code {
+    [Parameter]
+    public bool ShowBusy { get; set; }
+}
