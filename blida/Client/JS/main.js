@@ -2,6 +2,13 @@
 import Plotly from 'plotly.js-dist';
 
 window.plot = {
+    purge: (div) => {
+        Plotly.purge(div);
+    },
+    animate: (div, data, frames, attribs) => {
+        //console.log('Animate', data);
+        Plotly.animate(div, data, frames, attribs);
+    },
     draw: (div, title, value, avg, y, range) => {
         var data = [
             {
@@ -23,13 +30,12 @@ window.plot = {
         Plotly.newPlot(div, data, layout, { staticPlot: true });
     },
     line: (div, data, layout, options, update) => {
-        //layout.width = document.getElementById(div).offsetWidth;
         if (update) {
-            console.log('Update', div);
+            //console.log('Update', div);
             Plotly.react(div, data, layout, options);
         }
         else {
-            console.log('Draw', div);
+            //console.log('Draw', div, data);
             Plotly.newPlot(div, data, layout, options);
         }
     },

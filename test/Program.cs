@@ -1,18 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using OpenWeather;
+﻿using OpenWeather;
+using StackExchange.Redis;
 using System;
-using System.Net.Http;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using StackExchange.Redis;
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
-using System.IO.Compression;
-using System.Dynamic;
 
 namespace test
 {
@@ -48,90 +41,45 @@ namespace test
         }
         static async Task Main(string[] args)
         {
-            object Layout = new
-            {
-                margin = new { l = 60, r = 40, t = 0, b = 0 },
-                autosize = true,
-                plot_bgcolor = "rgb(219,233,244)"
-            };
-            var layout = new
-            {
-                title = new
-                {
-                    text = "Some Text",
-                    font = new
-                    {
-                        color = "rgb(18,97,128)",
-                        size = 28
-                    },
-                    xref = "paper",
-                    y = 0.85,
-                    x = 0.01
-                },
-                margin = new { l = 60, r = 40, t = 60, b = 0 },
-                xaxis = new { side = "top" },
-                yaxis = new { title = "Temperature" }
-            };
-
-            var obC = CopyValues(Layout, layout);
-
-            var sC = JsonSerializer.Serialize(obC);
-            var ob = JsonSerializer.Deserialize<object>(sC);
-
             try
             {
                 var redislab = ConnectionMultiplexer
                     .Connect("redis");
-                var db2 = redislab.GetDatabase();
-                var old = await db2.HashGetAllAsync("OpenWeather_Forecast");
-                byte[] b = old[1].Value;
+                var db = redislab.GetDatabase();
+                var last = await db.HashGetAllAsync("OpenWeather_Forecast");
+                byte[] b = last[1].Value;
 
-                var last = Compressor.Unpack<List<Data>>(b) ?? new List<Data>();
-                var dp = last.First();
-                Console.WriteLine("byte {0}, characters {1}", b.Length, JsonSerializer.Serialize(dp).Length);
-                foreach (var t in last
+                var data = Compressor.Unpack<List<Data>>(b) ?? new List<Data>();
+
+                var rek = data
                     .Where(f => f.id.Equals(2063523) && f.dtype.Equals(DataType.forecast))
-                    .GroupBy(f => f.dt, f => f.main.temp)
-                    .Select(f => (f.Key, f.Average(), f.Max(), f.Min())))
+                    .GroupBy(f => f.dt, f => f.main.temp);
+                var list = new List<decimal?[]>(
+                    Enumerable.Range(1, rek.Count()).Select(_ => new decimal?[40]));
+                for (int row = 0; row < 40; row++)
                 {
-                    Console.WriteLine("{0} {1:0.0} {2:0.0} {3:0.0}", t.Item1, t.Item2, t.Item3, t.Item4);
+                    for (int col = 0; col < rek.ElementAt(row).Count(); col++)
+                    {
+                        list.ElementAt(col)[row] = rek.ElementAt(row).ElementAt(col);
+                    }
                 }
-                var http = new HttpClient();
-                string endpoint = "http://api.openweathermap.org/data/2.5/group?id=3413829&units=metric&appid=";
-                var response = await http.GetAsync(endpoint);
-                //Console.WriteLine(await response.Content.ReadAsStringAsync());
-                var temp = JsonSerializer.Deserialize<Response>(
-                    await response.Content.ReadAsStringAsync(), JsonOptions);
-                List<Data> data = temp.list.Select(t => new Data(
-                    DataType.actual, t.id, t.dt, 0, t.main, t.wind, t.clouds))
-                    .ToList();
-                var dt = data.First().dt;
-
-                endpoint = "http://api.openweathermap.org/data/2.5/forecast?id=3413829&units=metric&appid=";
-                response = await http.GetAsync(endpoint);
-                //Console.WriteLine(await response.Content.ReadAsStringAsync());
-                temp = JsonSerializer.Deserialize<Response>(
-                    await response.Content.ReadAsStringAsync(), JsonOptions);
-                data.AddRange(temp.list.Select(t => new Data(
-                    DataType.forecast, temp.city.id, t.dt, (int)(t.dt - dt).TotalMinutes, t.main, t.wind, t.clouds)
-                ));
-                data.Sort(DataComparer.ByDt);
-                foreach (var t in data)
+                decimal?[] lastRow = list.First();
+                foreach (var row in list)
                 {
-                    Console.WriteLine("{0} {1} {2} {3} {4} {5}", t.dtype.ToString("g"), t.id, t.dt, t.fdt, t.main.temp, t.GetHashCode());
+                    for (int i = 0; i < row.Length; i++)
+                    {
+                        row[i] = row[i] ?? lastRow[i];
+                    }
+                    lastRow = row;
                 }
-                /*
-                var diff = data.Except(last);
-                foreach (var t in diff)
+                foreach (var row in list)
                 {
-                    Console.WriteLine("{0} {1} {2} {3}", t.dtype.ToString("g"), t.id, t.dt, t.main.temp);
+                    foreach (var col in row)
+                    {
+                        Console.Write("{0:0.0} ", col);
+                    }
+                    Console.WriteLine();
                 }
-
-                var b = Compressor.Pack<IEnumerable<Data>>(data);
-
-                Console.WriteLine("Old: {0}", b.Length);
-                await db2.StringSetAsync("TestKey", b);
-                */
             }
             catch (Exception ex)
             {

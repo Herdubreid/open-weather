@@ -1,63 +1,66 @@
 ﻿@page "/"
-@implements IDisposable
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @inject GrpcChannel Channel
 
 <div class="row m-0">
-    <div id="random-plot" class="col p-0"></div>
+    <div id="anim-plot" class="col p-0"></div>
 </div>
-<Busy ShowBusy="@ShowBusy"></Busy>
 <style>
-    #random-plot {
+    #anim-plot {
         height: calc(100vh - 80px);
     }
 </style>
 
 @code {
-    bool ShowBusy { get; set; }
-    int LastLocation { get; set; } = -1;
-    int LastGraph { get; set; }
-    System.Timers.Timer EveryMinute { get; } = new System.Timers.Timer(60000);
     object Options = new
     {
         displayModeBar = false,
         responsive = true
     };
-    async Task UpdatePlot(bool update = false)
+    object Attribs = new
+    {
+    };
+    object Frames = new
+    {
+        transition = new
+        {
+            duration = 1500,
+            easing = "cubic-in-out",
+        },
+        frame = new
+        {
+            duration = 1500
+        }
+    };
+    async Task UpdatePlot()
     {
         var client = new WeatherForecast.WeatherForecastClient(Channel);
-        var plot = await client.GetRandomGraphAsync(new RandomGraphRequest { LastLocation = LastLocation, LastGraph = LastGraph });
-        var data = Compressor.Unpack<object>(plot.Data.ToArray());
-        var layout = Compressor.Unpack<object>(plot.Layout.ToArray());
-        await JS.InvokeVoidAsync("window.plot.line", "random-plot",
-            data, layout, Options, update);
-        LastLocation = plot.Location;
-    }
-    async void NextUpdate(object _1, System.Timers.ElapsedEventArgs _2)
-    {
-        ShowBusy = true;
-        StateHasChanged();
-        await UpdatePlot(true);
-        ShowBusy = false;
-        StateHasChanged();
+        int i = 0;
+        while (true)
+        {
+            var plot = client.GetAnimatedGraph(new GraphRequest { LastLocation = i });
+
+            await plot.ResponseStream.MoveNext(default(CancellationToken));
+            var data = Compressor.Unpack<object>(plot.ResponseStream.Current.Data.ToArray());
+            var layout = Compressor.Unpack<object>(plot.ResponseStream.Current.Layout.ToArray());
+            await JS.InvokeVoidAsync("window.plot.line", "anim-plot",
+                data, layout, Options);
+
+            while (await plot.ResponseStream.MoveNext(default(CancellationToken)))
+            {
+                data = Compressor.Unpack<object>(plot.ResponseStream.Current.Data.ToArray());
+
+                await JS.InvokeVoidAsync("window.plot.animate", "anim-plot",
+                    data, Frames, Attribs);
+            }
+            await Task.Delay(4000);
+            await JS.InvokeVoidAsync("window.plot.purge", "anim-plot");
+            i = ++i % 4;
+        }
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            ShowBusy = true;
-            StateHasChanged();
-            await UpdatePlot();
-            ShowBusy = false;
-            StateHasChanged();
-            EveryMinute.Elapsed += NextUpdate;
-            EveryMinute.AutoReset = true;
-            EveryMinute.Enabled = true;
-        }
-    }
-    void IDisposable.Dispose()
-    {
-        EveryMinute.Elapsed -= NextUpdate;
+        await UpdatePlot();
     }
 }

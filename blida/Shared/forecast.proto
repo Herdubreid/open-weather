@@ -11,13 +11,13 @@ message ForecastResponse
 	bytes data = 1;
 }
 
-message RandomGraphRequest
+message GraphRequest
 {
 	int32 lastLocation = 1;
 	int32 lastGraph = 2;
 }
 
-message RandomGraphResponse
+message GraphResponse
 {
 	int32 location = 1;
 	int32 graph = 2; 
@@ -29,5 +29,6 @@ message RandomGraphResponse
 service WeatherForecast
 {
 	rpc GetWeatherForecasts (google.protobuf.Empty) returns (ForecastResponse);
-	rpc GetRandomGraph(RandomGraphRequest) returns (RandomGraphResponse);
+	rpc GetRandomGraph(GraphRequest) returns (GraphResponse);
+	rpc GetAnimatedGraph(GraphRequest) returns (stream GraphResponse);
 }

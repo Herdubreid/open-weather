@@ -1,0 +1,63 @@
+﻿@page "/Random"
+@implements IDisposable
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject GrpcChannel Channel
+
+<div class="row m-0">
+    <div id="random-plot" class="col p-0"></div>
+</div>
+<Busy ShowBusy="@ShowBusy"></Busy>
+<style>
+    #random-plot {
+        height: calc(100vh - 80px);
+    }
+</style>
+
+@code {
+    bool ShowBusy { get; set; }
+    int LastLocation { get; set; } = -1;
+    int LastGraph { get; set; }
+    System.Timers.Timer EveryMinute { get; } = new System.Timers.Timer(60000);
+    object Options = new
+    {
+        displayModeBar = false,
+        responsive = true
+    };
+    async Task UpdatePlot(bool update = false)
+    {
+        var client = new WeatherForecast.WeatherForecastClient(Channel);
+        var plot = await client.GetRandomGraphAsync(new GraphRequest { LastLocation = LastLocation, LastGraph = LastGraph });
+        var data = Compressor.Unpack<object>(plot.Data.ToArray());
+        var layout = Compressor.Unpack<object>(plot.Layout.ToArray());
+        await JS.InvokeVoidAsync("window.plot.line", "random-plot",
+            data, layout, Options, update);
+        LastLocation = plot.Location;
+    }
+    async void NextUpdate(object _1, System.Timers.ElapsedEventArgs _2)
+    {
+        ShowBusy = true;
+        StateHasChanged();
+        await UpdatePlot(true);
+        ShowBusy = false;
+        StateHasChanged();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ShowBusy = true;
+            StateHasChanged();
+            await UpdatePlot();
+            ShowBusy = false;
+            StateHasChanged();
+            EveryMinute.Elapsed += NextUpdate;
+            EveryMinute.AutoReset = true;
+            EveryMinute.Enabled = true;
+        }
+    }
+    void IDisposable.Dispose()
+    {
+        EveryMinute.Elapsed -= NextUpdate;
+    }
+}
