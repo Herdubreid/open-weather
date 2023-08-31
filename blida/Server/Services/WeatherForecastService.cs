@@ -139,7 +139,7 @@ namespace Celin.Server
                 }
                 Logger.LogInformation("Finished!");
             }
-            catch (Exception ex) { }
+            catch (Exception) { }
         }
         public override async Task<GraphResponse> GetRandomGraph(GraphRequest request, ServerCallContext context)
         {
@@ -250,7 +250,7 @@ namespace Celin.Server
                 });
                 response.Layout = Google.Protobuf.ByteString.CopyFrom(Compressor.Pack(layout));
             }
-            catch (Exception ex) { }
+            catch (Exception) { }
 
             return response;
         }

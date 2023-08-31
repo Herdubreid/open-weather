@@ -51,8 +51,11 @@
             {
                 data = Compressor.Unpack<object>(plot.ResponseStream.Current.Data.ToArray());
 
-                await JS.InvokeVoidAsync("window.plot.animate", "anim-plot",
-                    data, Frames, Attribs);
+                try
+                {
+                    await JS.InvokeVoidAsync("window.plot.animate", "anim-plot",
+                        data, Frames, Attribs);
+                } catch { }
             }
             await Task.Delay(4000);
             await JS.InvokeVoidAsync("window.plot.purge", "anim-plot");

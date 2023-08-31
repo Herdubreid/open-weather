@@ -3,11 +3,15 @@ import Plotly from 'plotly.js-dist';
 
 window.plot = {
     purge: (div) => {
-        Plotly.purge(div);
+        try {
+            Plotly.purge(div);
+        } catch {}
     },
     animate: (div, data, frames, attribs) => {
         //console.log('Animate', data);
-        Plotly.animate(div, data, frames, attribs);
+        try {
+            Plotly.animate(div, data, frames, attribs);
+        } catch {}
     },
     draw: (div, title, value, avg, y, range) => {
         var data = [
@@ -27,19 +31,25 @@ window.plot = {
         ];
 
         var layout = { width: 600, height: 450, xaxis: { range: range } };
-        Plotly.newPlot(div, data, layout, { staticPlot: true });
+        try {
+            Plotly.newPlot(div, data, layout, { staticPlot: true });
+        } catch {}
     },
     line: (div, data, layout, options, update) => {
-        if (update) {
-            //console.log('Update', div);
-            Plotly.react(div, data, layout, options);
-        }
-        else {
-            //console.log('Draw', div, data);
-            Plotly.newPlot(div, data, layout, options);
-        }
+        try {
+            if (update) {
+                //console.log('Update', div);
+                Plotly.react(div, data, layout, options);
+            }
+            else {
+                //console.log('Draw', div, data);
+                Plotly.newPlot(div, data, layout, options);
+            }
+        } catch {}
     },
     relayout: (div, layout) => {
-        Plotly.relayout(div, layout);
+        try {
+            Plotly.relayout(div, layout);
+        } catch {}
     }
 }
